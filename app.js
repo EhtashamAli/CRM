@@ -1,6 +1,11 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+// Imports the Google Cloud client library
+const vision = require('@google-cloud/vision');
+
+// Creates a client
+const client = new vision.ImageAnnotatorClient();
 
 // Set The Storage Engine
 const storage = multer.diskStorage({
@@ -59,10 +64,23 @@ app.post('/upload', (req, res) => {
           error : "no file selected"
         });
       } else {
-        res.status(500).json( {
-          msg: 'File Uploaded!',
-          file: `uploads/${req.file.filename}`
+
+        // Performs label detection on the image file
+        client
+        .labelDetection(`./public/uploads/${req.file.filename}`)
+        .then(results => {
+          const labels = results[0].labelAnnotations;
+
+          console.log('Labels:');
+          labels.forEach(label => console.log(label.description));
+        })
+        .catch(err => {
+          console.error('ERROR:', err);
         });
+        // res.status(500).json( {
+        //   msg: 'File Uploaded!',
+        //   file: `uploads/${req.file.filename}`
+       // });
       }
     }
   });
