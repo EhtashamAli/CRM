@@ -19,7 +19,9 @@ const upload = multer({
   }
 }).single('myImage');
 
-// Check File Type
+// Check File Typeconst port = 3000;
+
+app.listen(port, () => console.log(`Server started on port ${port}`));
 function checkFileType(file, cb){
   // Allowed ext
   const filetypes = /jpeg|jpg|png|gif/;
