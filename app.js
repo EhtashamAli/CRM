@@ -3,11 +3,15 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
+const cors = require('cors');
 const  {
   removeDomains,
   removePhonenumbers,
   removePostcodes,
   removeEmails,
+  validateEmail,
+  validateDomain,
+  validatePhoneNumber
  } = require ('./functions');
 
  const GOOGLE_CLOUD_KEYFILE =  require('./credentials/leadcarrot.json');
@@ -16,7 +20,9 @@ const vision = require('@google-cloud/vision');
 const language = require ('@google-cloud/language');
 
 // Creates a client
-  const visionClient = new vision.ImageAnnotatorClient();
+  const visionClient = new vision.ImageAnnotatorClient({
+    keyFilename: './credentials/leadcarrot.json',
+  });
 
 // Set The Storage Engine
 const storage = multer.diskStorage({
@@ -29,7 +35,7 @@ const storage = multer.diskStorage({
 // Init Upload
 const upload = multer({
   storage: storage,
-  limits:{fileSize: 1000000},
+  limits:{fileSize: 1000000000},
   fileFilter: function(req, file, cb){
     checkFileType(file, cb);
   }
@@ -38,6 +44,7 @@ const upload = multer({
 // Check File Typeconst port = 3000;
 
 function checkFileType(file, cb){
+  
   // Allowed ext
   const filetypes = /jpeg|jpg|png|gif/;
   // Check ext
@@ -46,22 +53,24 @@ function checkFileType(file, cb){
   const mimetype = filetypes.test(file.mimetype);
 
   if(mimetype && extname){
+    console.log("tufail true" ,file);
     return cb(null,true);
   } else {
+    console.log("tufail false" ,file);
     cb('Error: Images Only!');
   }
 }
 
 // Init app
 const app = express();
-
+app.use(cors());
 // EJS
 //app.set('view engine', 'ejs');
 
 // Public Folder
 app.use(express.static('./public'));
 
-//app.get('/', (req, res) => res.render('index'));
+app.get('/', (req, res) => res.send('Hello'));
 
 app.post('/upload', (req, res) => {
   upload(req, res, (err) => {
@@ -76,55 +85,73 @@ app.post('/upload', (req, res) => {
         });
       } else {
         const img = `./public/uploads/${req.file.filename}`;
-        // fs.readFile(img, function(err, data){
-        //   if(err) console.log(err);
-        //   console.log("img" , data)
-        // });
-        
         getresult(img);
         async function getresult (file) {
           // Send image to Image API for OCR
           let visionResults;
           try {
-            // const buf = Buffer.from(file, 'base64');
-            // console.log('buf',buf)
             visionResults = await visionClient.textDetection(file);
-            console.log('visionresult1',visionResults)
-
           } catch (err) {
             // Throw error
-            console.log("Myerror",err);
+            res.status(500).json({
+              errorCode : 500,
+              Error : err
+            })
           }
-          // Text will be a string of all the text detected in the image.
-          // E.g "John Smith\n Test Company\n 01234567890\n 1 Random Place\n P0S TC0DE\n www.johnsmith.com\n john.smith@testcompany.com\n" (Note the newlines)
-          console.log('visionresult2',visionResults)
           let { text } = visionResults[0].fullTextAnnotation;
-          console.log("text" , text)
+          // console.log("text" , text)
           // Take a copy of the original text to reference later
           const originalText = _.cloneDeep(text);
           console.log("originalText" , originalText)
-          // Remove postcodes
-          const { stringWithoutPostcodes } = removePostcodes(text);
-          console.log('stringWithoutPostcodes' , stringWithoutPostcodes);
-          text = stringWithoutPostcodes;
-          // Remove phonenumbers
-          const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
-          console.log(phonenumbers);
-          text = stringWithoutPhonenumbers;
-          // Remove detected emails
-          const { emails, stringWithoutEmails } = removeEmails(text);
-          console.log("emails" , emails); 
-          console.log("stringWithoutEmails" , stringWithoutEmails);
+          // // Remove postcodes
+          // const { postcodes ,stringWithoutPostcodes } = removePostcodes(text);
+          // // console.log('Postcodes' , postcodes);
+          // text = stringWithoutPostcodes;
+          // // Remove phonenumbers
+          // const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
+          // // console.log('PhoneNumber' , phonenumbers);
+          // text = stringWithoutPhonenumbers;
+          // // Remove detected emails
+          // const { emails, stringWithoutEmails } = removeEmails(text);
+          // // console.log("emails" , emails); 
+          // // console.log("stringWithoutEmails" , stringWithoutEmails);
+          // text = stringWithoutEmails;
+          // // Remove detected domains
+          // const {  stringWithoutDomains } = removeDomains(text);
+          // // console.log("domains" , domains);
+          // text = stringWithoutDomains;
+          // // Clean text and send to natural language API
+          const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
+          // console.log('cleanedText' , cleanedText);
+          const languageClient = new language.LanguageServiceClient({
+            keyFilename: './credentials/leadcarrot.json',
+          });
+          const document = {
+            content: cleanedText,
+            type: 'PLAIN_TEXT',
+          };
 
-          text = stringWithoutEmails;
-          // Remove detected domains
-          const { domains ,stringWithoutDomains } = removeDomains(text);
-          console.log("domains" , domains);
-          text = stringWithoutDomains;
-          // Clean text and send to natural language API
-          const cleanedText = _.replace(_.cloneDeep(text), /\r?\n|\r/g, ' ');
-          console.log('cleanedText' , cleanedText);
-          const languageClient = new language.LanguageServiceClient();
+            const arr = originalText.split("\n")
+            // ['' , 'xyz.com' , '' , '']
+
+            const reqEmail =  arr.map(str => {
+               if(validateEmail(str))
+                  return str
+            });
+            const reqDomain =  arr.map(str => {
+              if(validateDomain(str))
+                 return str
+           });
+           const reqNumber =  arr.map(str => {
+            if(validatePhoneNumber(str))
+               return str
+         });
+            const email = reqEmail.filter((e) => e !== undefined);
+            const domain = reqDomain.filter((e) => e !== undefined);
+            const number = reqNumber.filter((e) => e !== undefined);
+            console.log("email" , email);
+            console.log("domain" , domain);
+            console.log("number" , number);
           let languageResults;
           try {
             languageResults = await languageClient.analyzeEntities({
@@ -138,7 +165,7 @@ app.post('/upload', (req, res) => {
           }
           // Go through detected entities
           const { entities } = languageResults[0];
-          const requiredEntities = { ORGANIZATION: '', PERSON: '', LOCATION: '' };
+          const requiredEntities = { ORGANIZATION: '', PERSON: '', LOCATION: '' , OTHER: '' , UNKNOWN: ''};
           _.each(entities, entity => {
             const { type } = entity;
             if (_.has(requiredEntities, type)) {
@@ -147,92 +174,12 @@ app.post('/upload', (req, res) => {
           });
           // return your data
           res.status(200).json({
-            data : languageResults,
-            entities,
-            requiredEntities
+            requiredEntities,
+            email,
+            domain,
+            number
           })
          }
-         
-         
-
-
-
-
-
-
-
-
-        // var visionResults;
-      
-        //   const buf = Buffer.from(`./public/uploads/${req.file.filename}`, 'base64');
-        //   visionResults =  visionClient.textDetection(buf).then(() => {
-        //         // Text will be a string of all the text detected in the image.
-        //         // E.g "John Smith\n Test Company\n 01234567890\n 1 Random Place\n P0S TC0DE\n www.johnsmith.com\n john.smith@testcompany.com\n" (Note the newlines)
-        //         let { text } = visionResults[0].fullTextAnnotation;
-        //         // Take a copy of the original text to reference later
-        //         const originalText = _.cloneDeep(text);
-        //         // Remove postcodes
-        //         const { stringWithoutPostcodes } = removePostcodes(text);
-        //         text = stringWithoutPostcodes;
-        //         // Remove phonenumbers
-        //         const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
-        //         text = stringWithoutPhonenumbers;
-        //         // Remove detected emails
-        //         const { emails, stringWithoutEmails } = removeEmails(text);
-        //         text = stringWithoutEmails;
-        //         // Remove detected domains
-        //         const { stringWithoutDomains } = removeDomains(text);
-        //         text = stringWithoutDomains;
-        //         // Clean text and send to natural language API
-        //         const cleanedText = _.replace(_.cloneDeep(text), /\r?\n|\r/g, ' ');
-        //         const languageClient = new language.LanguageServiceClient({
-        //           keyFilename: GOOGLE_CLOUD_KEYFILE,
-        //         });
-        //         let languageResults;
-        //           languageResults =  languageClient.analyzeEntities({
-        //             document: {
-        //               content: cleanedText,
-        //               type: 'PLAIN_TEXT',
-        //             },
-        //           }).then(() => {
-        //               // Go through detected entities
-        //               const { entities } = languageResults[0];
-        //               const requiredEntities = { ORGANIZATION: '', PERSON: '', LOCATION: '' };
-        //               _.each(entities, entity => {
-        //                 const { type } = entity;
-        //                 if (_.has(requiredEntities, type)) {
-        //                   requiredEntities[type] += ` ${entity.name}`;
-        //                 }
-        //               });
-        //               // return your data
-        //           }).catch((err) => {
-        //             console.log('err2' + err);
-        //           })
-        //   })
-        //   .catch((err) => {
-        //     console.log(err);
-        //   })
-       
-        
-       
-       
-       
-        // // Performs label detection on the image file
-        // client
-        // .labelDetection(`./public/uploads/${req.file.filename}`)
-        // .then(results => {
-        //   const labels = results[0].labelAnnotations;
-
-        //   console.log('Labels:');
-        //   labels.forEach(label => console.log(label.description));
-        // })
-        // .catch(err => {
-        //   console.error('ERROR:', err);
-        //});
-        // res.status(500).json( {
-        //   msg: 'File Uploaded!',
-        //   file: `uploads/${req.file.filename}`
-       // });
       }
     }
   });
