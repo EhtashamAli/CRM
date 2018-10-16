@@ -19,6 +19,8 @@
   "dependencies": {
     "@google-cloud/language": "^2.0.0",
     "@google-cloud/vision": "^0.22.1",
+    "firebase": "^5.5.3",
+    "firebase-admin": "^6.0.0",
     "cors": "^2.8.4",
     "express": "^4.16.4",
     "lodash": "^4.17.11",
