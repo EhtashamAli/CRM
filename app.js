@@ -1,8 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-
-
-
 // Routes
 const NLP = require('./API/Routes/NLP');
 const USER = require('./API/Routes/User');

@@ -97,26 +97,7 @@ const visionClient = new vision.ImageAnnotatorClient({
               // Take a copy of the original text to reference later
               const originalText = _.cloneDeep(text);
               console.log("originalText" , originalText)
-              // // Remove postcodes
-              // const { postcodes ,stringWithoutPostcodes } = removePostcodes(text);
-              // // console.log('Postcodes' , postcodes);
-              // text = stringWithoutPostcodes;
-              // // Remove phonenumbers
-              // const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
-              // // console.log('PhoneNumber' , phonenumbers);
-              // text = stringWithoutPhonenumbers;
-              // // Remove detected emails
-              // const { emails, stringWithoutEmails } = removeEmails(text);
-              // // console.log("emails" , emails); 
-              // // console.log("stringWithoutEmails" , stringWithoutEmails);
-              // text = stringWithoutEmails;
-              // // Remove detected domains
-              // const {  stringWithoutDomains } = removeDomains(text);
-              // // console.log("domains" , domains);
-              // text = stringWithoutDomains;
-              // // Clean text and send to natural language API
               const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
-              // console.log('cleanedText' , cleanedText);
               const languageClient = new language.LanguageServiceClient({
                 keyFilename: './credentials/leadcarrot.json',
               });
