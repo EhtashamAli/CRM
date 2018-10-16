@@ -8,4 +8,9 @@ const admin = require('firebase-admin');
     databaseURL: "https://cardapp-6477e.firebaseio.com"
   });
   
-  module.exports = Db;
+  var DB = admin.firestore();
+  const settings = {
+      timestampsInSnapshots: true
+  };
+  DB.settings(settings);
+  module.exports = DB;
