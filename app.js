@@ -11,7 +11,8 @@ const  {
   removeEmails,
   validateEmail,
   validateDomain,
-  validatePhoneNumber
+  validatePhoneNumber,
+  validatePostCode
  } = require ('./functions');
 
  const GOOGLE_CLOUD_KEYFILE =  require('./credentials/leadcarrot.json');
@@ -98,87 +99,125 @@ app.post('/upload', (req, res) => {
               Error : err
             })
           }
-          let { text } = visionResults[0].fullTextAnnotation;
-          // console.log("text" , text)
-          // Take a copy of the original text to reference later
-          const originalText = _.cloneDeep(text);
-          console.log("originalText" , originalText)
-          // // Remove postcodes
-          // const { postcodes ,stringWithoutPostcodes } = removePostcodes(text);
-          // // console.log('Postcodes' , postcodes);
-          // text = stringWithoutPostcodes;
-          // // Remove phonenumbers
-          // const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
-          // // console.log('PhoneNumber' , phonenumbers);
-          // text = stringWithoutPhonenumbers;
-          // // Remove detected emails
-          // const { emails, stringWithoutEmails } = removeEmails(text);
-          // // console.log("emails" , emails); 
-          // // console.log("stringWithoutEmails" , stringWithoutEmails);
-          // text = stringWithoutEmails;
-          // // Remove detected domains
-          // const {  stringWithoutDomains } = removeDomains(text);
-          // // console.log("domains" , domains);
-          // text = stringWithoutDomains;
-          // // Clean text and send to natural language API
-          const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
-          // console.log('cleanedText' , cleanedText);
-          const languageClient = new language.LanguageServiceClient({
-            keyFilename: './credentials/leadcarrot.json',
-          });
-          const document = {
-            content: cleanedText,
-            type: 'PLAIN_TEXT',
-          };
-
-            const arr = originalText.split("\n")
-            // ['' , 'xyz.com' , '' , '']
-
-            const reqEmail =  arr.map(str => {
-               if(validateEmail(str))
-                  return str
+          try {
+            var { text } = visionResults[0].fullTextAnnotation;
+          }
+          catch(Err) {
+              res.status(404).json({
+                err : Err,
+                message : "No Text In Image"
+              })
+          }
+            // console.log("text" , text)
+            // Take a copy of the original text to reference later
+            const originalText = _.cloneDeep(text);
+            console.log("originalText" , originalText)
+            // // Remove postcodes
+            // const { postcodes ,stringWithoutPostcodes } = removePostcodes(text);
+            // // console.log('Postcodes' , postcodes);
+            // text = stringWithoutPostcodes;
+            // // Remove phonenumbers
+            // const { phonenumbers, stringWithoutPhonenumbers } = removePhonenumbers(text);
+            // // console.log('PhoneNumber' , phonenumbers);
+            // text = stringWithoutPhonenumbers;
+            // // Remove detected emails
+            // const { emails, stringWithoutEmails } = removeEmails(text);
+            // // console.log("emails" , emails); 
+            // // console.log("stringWithoutEmails" , stringWithoutEmails);
+            // text = stringWithoutEmails;
+            // // Remove detected domains
+            // const {  stringWithoutDomains } = removeDomains(text);
+            // // console.log("domains" , domains);
+            // text = stringWithoutDomains;
+            // // Clean text and send to natural language API
+            const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
+            // console.log('cleanedText' , cleanedText);
+            const languageClient = new language.LanguageServiceClient({
+              keyFilename: './credentials/leadcarrot.json',
             });
-            const reqDomain =  arr.map(str => {
-              if(validateDomain(str))
+            const document = {
+              content: cleanedText,
+              type: 'PLAIN_TEXT',
+            };
+  
+              const arr = originalText.split("\n")
+              // ['' , 'xyz.com' , '' , '']
+  
+              const reqEmail =  arr.map(str => {
+                 if(validateEmail(str))
+                    return str
+              });
+              const reqDomain =  arr.map(str => {
+                if(validateDomain(str))
+                   return str
+             });
+             const reqNumber =  arr.map(str => {
+              if(validatePhoneNumber(str))
                  return str
            });
-           const reqNumber =  arr.map(str => {
-            if(validatePhoneNumber(str))
+           const reqPostcode =  arr.map(str => {
+            if(validatePostCode(str))
                return str
-         });
-            const email = reqEmail.filter((e) => e !== undefined);
-            const domain = reqDomain.filter((e) => e !== undefined);
-            const number = reqNumber.filter((e) => e !== undefined);
-            console.log("email" , email);
-            console.log("domain" , domain);
-            console.log("number" , number);
-          let languageResults;
-          try {
-            languageResults = await languageClient.analyzeEntities({
-              document: {
-                content: cleanedText,
-                type: 'PLAIN_TEXT',
-              },
             });
-          } catch (err) {
-            // Throw an error
-          }
-          // Go through detected entities
-          const { entities } = languageResults[0];
-          const requiredEntities = { ORGANIZATION: '', PERSON: '', LOCATION: '' , OTHER: '' , UNKNOWN: ''};
-          _.each(entities, entity => {
-            const { type } = entity;
-            if (_.has(requiredEntities, type)) {
-              requiredEntities[type] += ` ${entity.name}`;
+
+            Objnumber = reqNumber.map(num => {
+              return {
+                phone : num ? num : '',
+                type : 'Mobile'
+              }
+            });
+           
+              const email = reqEmail.filter((e) => e !== undefined);
+              const domain = reqDomain.filter((e) => e !== undefined);
+              const number = Objnumber.filter((e) => e.number !== undefined);
+              const postCode = reqPostcode.filter((e) => e !== undefined);
+              console.log("email" , email);
+              console.log("domain" , domain);
+              console.log("number" , number);
+              console.log("postCode" , postCode);
+            let languageResults;
+            try {
+              languageResults = await languageClient.analyzeEntities({
+                document: {
+                  content: cleanedText,
+                  type: 'PLAIN_TEXT',
+                },
+              });
+            } catch (err) {
+              res.status(500).json({
+                err : err,
+              })
             }
-          });
-          // return your data
-          res.status(200).json({
-            requiredEntities,
-            email,
-            domain,
-            number
-          })
+            // Go through detected entities
+            const { entities } = languageResults[0];
+            const requiredEntities = { ORGANIZATION: '', PERSON: '', LOCATION: '' , OTHER: '' , UNKNOWN: ''};
+            _.each(entities, entity => {
+              const { type } = entity;
+              if (_.has(requiredEntities, type)) {
+                requiredEntities[type] += ` ${entity.name}`;
+              }
+            });
+
+            // return your data
+            res.status(200).json({
+              firstName : requiredEntities.PERSON,
+              lastName : requiredEntities.PERSON,
+              phonenumber : Objnumber,
+              address : [
+                {
+                  zip: '',
+                  address : requiredEntities.LOCATION
+                }
+               ],
+              email,
+              company : requiredEntities.ORGANIZATION,
+              position : requiredEntities.PERSON,
+              description : requiredEntities.OTHER + ' ' + requiredEntities.UNKNOWN,
+              domain,
+              zipCode : postCode,
+              other : requiredEntities.OTHER,
+              UNKNOWN : requiredEntities.UNKNOWN
+            })
          }
       }
     }

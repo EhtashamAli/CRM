@@ -46,12 +46,16 @@ const domainRegex = /[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]{0,1}\.([a-zA-Z]{1
  return { domains: matches, stringWithoutDomains: cleanedText };
 };
 
+const validatePostCode = code => {
+  var re = /([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2})/i;
+  return re.test(String(code));
+}
 const validateEmail = (email) => {
   var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(String(email).toLowerCase());
 }
 const validateDomain = (domain) =>{
-var re = /(?:[\w-]+\.)+[\w-]+/;
+var re = /[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]{0,1}\.([a-zA-Z]{1,6}|[a-zA-Z0-9-]{1,30}\.[a-zA-Z]{2,3})/;
 return re.test(String(domain).toLowerCase())        
 }
 const validatePhoneNumber = (num) => {
@@ -65,5 +69,6 @@ module.exports = {
     removeDomains,
     validateEmail,
     validateDomain,
-    validatePhoneNumber
+    validatePhoneNumber,
+    validatePostCode
 }
