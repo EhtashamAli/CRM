@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const DB = require('../FireBase/Firebase');
+const bcrypt = require('bcrypt');
 const USER = DB.collection("USER");
-
+const validateRegisterInput = require('../utils/register');
 
 //   m5kOdvy00Hu2MEI1HoM3
 router.post('/login' , (req , res) => {
@@ -36,64 +37,72 @@ router.post('/login' , (req , res) => {
                 error: error
             })
     });
-
-//     USER.doc("m5kOdvy00Hu2MEI1HoM3").get()
-//     .then(doc => {
-//         if(!doc.exists){
-//             // console.log('No such document');
-//             res.status(404).json({
-//               errorCode : 404,
-//               error : "EMAIL OR PASSWORD IS INCORRECT"
-//             })
-//         }else
-//         {
-//             // Match if user is correct
-//             console.log(doc.data().UserName)
-//             console.log(req.body.UserName)
-//             console.log(doc.data().Password)
-//             console.log(req.body.Password)
-//             if(req.body.UserName == doc.data().UserName) {
-//                 if(req.body.Password == doc.data().Password) {
-//                     res.status(200).json({
-//                         result: doc.data()
-//                     });
-//                 } else {
-//                     res.status(404).json({
-//                         errorCode : 404,
-//                         error : "EMAIL OR PASSWORD IS INCORRECT"
-//                       })
-//                 }
-//             } else {
-//                 res.status(404).json({
-//                     errorCode : 404,
-//                     error : "EMAIL OR PASSWORD IS INCORRECT"
-//                   })
-//             }
-//         }
-//     }).catch(err => {
-//         res.status(500).json({
-//                 err
-//            })
-//    });
 });
-router.post('/signUp' , (req , res) => {
-    USER.doc()
-    .set(JSON.parse(JSON.stringify(person)))
-    .then(result => {
-        res.status(200).json({
-            result
+router.post('/register' , (req , res) => {
+
+    const {
+        errors,
+        isValid
+      } = validateRegisterInput(req.body);
+
+      if (!isValid) {
+        return res.status(500).json(errors);
+      }
+
+    const userExist = [];
+    USER.where('Email','==', req.body.email)
+    .get()
+    .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+            userExist.push(doc.data().Email);
         });
+        if(userExist.length > 0){
+            console.log(userExist);
+             res.status(500).json({
+                result: "Email Already Exists"
+            });  
+        } else {
+            console.log('else');
+            const User = {
+                UserName : req.body.name,
+                Password : req.body.password,
+                Email : req.body.email
+            }
+             bcrypt.genSalt(10, function (err, salt) {
+                bcrypt.hash(User.Password, salt, function (err, hash) {
+                  // if (err) throw err;
+                  User.Password = hash
+
+                  USER.doc()
+                  .set(JSON.parse(JSON.stringify(User)))
+                  .then(result => {
+                       res.status(200).json({
+                          result : User
+                      });
+                  });
+                });
+              });
+        }
     })
-    .catch(err => {
-        res.status(500).json({
-            err
-        });
+    .catch(function(error) {
+        console.log("Error getting documents: ", error);
     });
+
+    //  USER.where('Email','==', req.body.email)
+    // .onSnapshot(querySnapshot=> {
+    //     querySnapshot.forEach((doc) => {
+    //         userExist.push(doc.data().Email);
+    //     });
+        
+    //     },(error)=>{
+    //         res.status(500).json({
+    //             error
+    //         });   
+    //     });             
 });
 
 router.post('/update' , (req , res) => {
 
 });
-
 
 module.exports = router;

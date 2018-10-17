@@ -19,6 +19,7 @@
   "dependencies": {
     "@google-cloud/language": "^2.0.0",
     "@google-cloud/vision": "^0.22.1",
+    "bcrypt": "^3.0.1",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
     "express": "^4.16.4",
@@ -27,6 +28,7 @@
     "lodash": "^4.17.11",
     "mongoose": "^5.3.3",
     "morgan": "^1.9.1",
-    "multer": "^1.4.1"
+    "multer": "^1.4.1",
+    "validator": "^10.8.0"
   }
 }
