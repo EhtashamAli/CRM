@@ -2,36 +2,48 @@ const router = require('express').Router();
 const DB = require('../FireBase/Firebase');
 const bcrypt = require('bcrypt');
 const USER = DB.collection("USER");
+const HISTORY = DB.collection("HISTORY");
 const validateRegisterInput = require('../utils/register');
 
 //   m5kOdvy00Hu2MEI1HoM3
 router.post('/login' , (req , res) => {
 
     let user = [];
-    let Password = []; //declare array for retrieving documents
-    USER.where('UserName','==', req.body.UserName)
+    let Password = ''; //declare array for retrieving documents
+    USER.where('Email','==', req.body.email)
     .onSnapshot(querySnapshot=> {
         querySnapshot.forEach((doc) => {
             // binded to the UI
             user.push(doc.id);
-            Password.push(doc.data().Password);
+            Password = doc.data().Password;
         });
         if(user.length <= 0){
             res.status(404).json({
-                result: "NOT FOUND"
+                result: "Email or password is incorrect"
             });  
         } else {
-            if(req.body.Password == Password) {
+            bcrypt.compare(req.body.password, Password)
+            .then(isMatch => {
+              if (isMatch) {
                 res.status(200).json({
-                    id: user
-                });  
-            } else {
+                            id: user[0]
+                        });
+              } else {
                 res.status(404).json({
-                    result: "NOT FOUND"
-                });  
-            }
+                  status: 404,
+                  message: "Email or password is incorrect"
+                })
+              }
+            })
+            .catch(err => {
+              res.status(500).json({
+                status: "Something Went Wrong",
+                Error: {
+                  Message: err
+                }
+              });
+            });
         }
-
     },(error)=>{
             res.status(500).json({
                 error: error
@@ -79,6 +91,11 @@ router.post('/register' , (req , res) => {
                        res.status(200).json({
                           result : User
                       });
+                  })
+                  .catch(err => {
+                    res.status(500).json({
+                       err
+                    });    
                   });
                 });
               });
@@ -101,8 +118,21 @@ router.post('/register' , (req , res) => {
     //     });             
 });
 
-router.post('/update' , (req , res) => {
-
+router.post('/update:id' , (req , res) => {
+    USER.doc(req.params.id).collection("HISTORY").doc()
+    .set({
+        name : req.body.name
+    },  { merge: true })
+    .then(result => {
+         res.status(200).json({
+            result : result
+        });
+    })
+    .catch(err => {
+      res.status(500).json({
+         err
+      });    
+    });
 });
 
 module.exports = router;
