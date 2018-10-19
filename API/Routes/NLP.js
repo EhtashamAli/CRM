@@ -49,10 +49,8 @@ function checkFileType(file, cb){
   const mimetype = filetypes.test(file.mimetype);
 
   if(mimetype && extname){
-    console.log("tufail true" ,file);
     return cb(null,true);
   } else {
-    console.log("tufail false" ,file);
     cb('Error: Images Only!');
   }
 }
@@ -96,7 +94,7 @@ const visionClient = new vision.ImageAnnotatorClient({
               // console.log("text" , text)
               // Take a copy of the original text to reference later
               const originalText = _.cloneDeep(text);
-              console.log("originalText" , originalText)
+              // console.log("originalText" , originalText)
               const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
               const languageClient = new language.LanguageServiceClient({
                 keyFilename: './credentials/leadcarrot.json',
@@ -137,10 +135,10 @@ const visionClient = new vision.ImageAnnotatorClient({
                 const domain = reqDomain.filter((e) => e !== undefined);
                 const number = Objnumber.filter((e) => e.number !== undefined);
                 const postCode = reqPostcode.filter((e) => e !== undefined);
-                console.log("email" , email);
-                console.log("domain" , domain);
-                console.log("number" , number);
-                console.log("postCode" , postCode);
+                // console.log("email" , email);
+                // console.log("domain" , domain);
+                // console.log("number" , number);
+                // console.log("postCode" , postCode);
               let languageResults;
               try {
                 languageResults = await languageClient.analyzeEntities({
@@ -163,8 +161,8 @@ const visionClient = new vision.ImageAnnotatorClient({
                   requiredEntities[type] += ` ${entity.name}`;
                 }
               });
-              console.log('address' ,requiredEntities.LOCATION);
-              console.log('company' , requiredEntities.ORGANIZATION);
+              // console.log('address' ,requiredEntities.LOCATION);
+              // console.log('company' , requiredEntities.ORGANIZATION);
   
               // return your data
               res.status(200).json({

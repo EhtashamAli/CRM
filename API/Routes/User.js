@@ -32,7 +32,7 @@ router.post('/login' , (req , res) => {
     .get()
     .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-            console.log(doc.data());
+            // console.log(doc.data());
             user.push(doc.id);
             Password = doc.data().Password;
         });
@@ -92,12 +92,12 @@ router.post('/register' , (req , res) => {
             userExist.push(doc.data().Email);
         });
         if(userExist.length > 0){
-            console.log(userExist);
+            // console.log(userExist);
              res.status(500).json({
                 result: "Email Already Exists"
             });  
         } else {
-            console.log('else');
+            // console.log('else');
             const User = {
                 UserName : req.body.name,
                 Password : req.body.password,
