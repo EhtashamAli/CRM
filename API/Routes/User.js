@@ -1,5 +1,7 @@
 const router = require('express').Router();
-const DB = require('../FireBase/Firebase');
+const passport = require('passport');
+const DB = require('../FireBase/Firebase').DB;
+const AUTH = require('../FireBase/Firebase').firebaseAuth;
 const bcrypt = require('bcrypt');
 const USER = DB.collection("USER");
 const HISTORY = DB.collection("HISTORY");
@@ -140,6 +142,39 @@ router.post('/register' , (req , res) => {
     //         });   
     //     });             
 });
+
+router.post('/signIn' , (req , res) => {
+    AUTH.signIn(req.body.email, req.body.password).then(result => {
+        res.status(200).json({
+            result
+        })
+    })
+    .catch(err => {
+        res.status(500).json({
+            err
+        })
+    })
+});
+
+router.post('/token' ,passport.authenticate('jwt', {
+    session: false
+  }), (req , res) => {
+    AUTH.authToken(req.body.idToken)
+  .then((decodedToken) => {
+    // var uid = decodedToken.uid;
+    // ...
+    res.status(200).json({
+        decodedToken
+    })
+  }).catch((error) =>{
+    // Handle error
+    res.status(500).json({
+        error
+    })
+  });
+
+});
+
 
 
 module.exports = router;

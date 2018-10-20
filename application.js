@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyparser = require('body-parser');
 const logger = require('morgan') ;
+const passport = require('passport');
 // Routes
 const NLP = require('./API/Routes/NLP');
 const USER = require('./API/Routes/User');
@@ -12,6 +13,8 @@ app.use(cors());
 app.use(logger('dev'));
 app.use(bodyparser.json()) ;
 app.use(bodyparser.urlencoded({extended: false})) ;
+app.use(passport.initialize());
+require('./API/Passport/Strategy')(passport);
 // Public Folder
 app.use(express.static('./public'));
 
