@@ -7,21 +7,45 @@ const USER = DB.collection("USER");
 const HISTORY = DB.collection("HISTORY");
 const validateRegisterInput = require('../utils/register');
 
-router.post('/update:id' , (req , res) => {
-    USER.doc(req.params.id).collection("HISTORY").doc()
-    .set({
-        name : req.body.name
+router.post('/update' , (req , res) => {
+    // TOKEN , UID , DATA OBJ
+  AUTH.authToken(req.body.token)
+  .then((decodedToken) => {
+    if(!decodedToken){
+        return res.status(404).json({
+            Error : "Invalid Token",
+            success : false
+        })
+    }
+    DB.collection('LOG').doc(req.body.uid).collection("History").doc()
+    .update({
+        name : "sdas"
     },  { merge: true })
     .then(result => {
-         res.status(200).json({
-            result : result
-        });
-    })
-    .catch(err => {
-      res.status(500).json({
-         err
-      });    
+        res.status(200).json({
+            result
+        })
     });
+  }).catch((error) =>{
+    // Handle error
+    res.status(500).json({
+        error
+    })
+});
+    // USER.doc(req.params.id).collection("HISTORY").doc()
+    // .set({
+    //     name : req.body.name
+    // },  { merge: true })
+    // .then(result => {
+    //      res.status(200).json({
+    //         result : result
+    //     });
+    // })
+    // .catch(err => {
+    //   res.status(500).json({
+    //      err
+    //   });    
+    // });
 });
 
 

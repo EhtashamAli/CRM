@@ -17,9 +17,12 @@ const  {
    // Imports the Google Cloud client library
 const vision = require('@google-cloud/vision');
 const language = require ('@google-cloud/language');
-
-   const GOOGLE_CLOUD_KEYFILE =  require('../../credentials/leadcarrot.json');
-
+const GOOGLE_CLOUD_KEYFILE =  require('../../credentials/leadcarrot.json');
+// DB instance 
+const DB = require('../FireBase/Firebase').DB;
+const AUTH = require('../FireBase/Firebase').firebaseAuth;
+const STORAGE = require('../FireBase/Firebase').Storage;
+// var storageRef = STORAGE.ref();
 // Set The Storage Engine
 const storage = multer.diskStorage({
   destination: './public/uploads/',
@@ -38,31 +41,25 @@ const upload = multer({
 }).single('myImage');
 
 // Check File Typeconst port = 3000;
-
 function checkFileType(file, cb){
-  
   // Allowed ext
   const filetypes = /jpeg|jpg|png|gif/;
   // Check ext
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   // Check mime
   const mimetype = filetypes.test(file.mimetype);
-
   if(mimetype && extname){
     return cb(null,true);
   } else {
     cb('Error: Images Only!');
   }
 }
-
-
 // Creates a client
 const visionClient = new vision.ImageAnnotatorClient({
     keyFilename: './credentials/leadcarrot.json',
   });
 
-
-  router.post('/NLP', (req, res) => {
+router.post('/NLP', (req, res) => {
     upload(req, res, (err) => {
       if(err){
         res.status(500).json({
@@ -90,7 +87,6 @@ const visionClient = new vision.ImageAnnotatorClient({
             }
             try {
               var { text } = visionResults[0].fullTextAnnotation;
-  
               // console.log("text" , text)
               // Take a copy of the original text to reference later
               const originalText = _.cloneDeep(text);
@@ -163,9 +159,9 @@ const visionClient = new vision.ImageAnnotatorClient({
               });
               // console.log('address' ,requiredEntities.LOCATION);
               // console.log('company' , requiredEntities.ORGANIZATION);
-  
-              // return your data
-              res.status(200).json({
+
+              // data fetched from NLP //
+              const DATA = {
                 firstName : requiredEntities.PERSON,
                 lastName : requiredEntities.PERSON,
                 phonenumber : Objnumber,
@@ -183,7 +179,44 @@ const visionClient = new vision.ImageAnnotatorClient({
                 zipCode : postCode,
                 other : requiredEntities.OTHER,
                 UNKNOWN : requiredEntities.UNKNOWN
-              })
+              }
+              //////////////////////////////////////////////////
+
+              // CHECKS IF USER IS SIGNED IN
+              if(req.body.token){
+                AUTH.authToken(req.body.token)
+                .then((decodedToken) => {
+                  if(!decodedToken){
+                      return res.status(404).json({
+                          Error : "Invalid Token",
+                          success : false
+                      })
+                  }
+                })
+                const ref = DB.collection("OCR").doc(req.body.uid).collection("History").doc()
+                ref.set(JSON.parse(JSON.stringify(DATA)))
+                  .then(result => {
+                      ref.get().then(doc => {
+                        res.status(200).json({
+                
+                            ...doc.data(),
+                            id : doc.id
+                          
+                         });
+                      })
+                  })
+                  .catch(err => {
+                    res.status(500).json({
+                       err
+                    });
+                  });    
+              } else { // IF NOT SIGNED IN
+                // return your data
+                res.status(200).json({
+                    ...doc.data(),
+                    id : null
+                });
+              }
             }
             catch(Err) {
                 res.status(404).json({

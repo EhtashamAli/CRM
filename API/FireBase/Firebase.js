@@ -17,9 +17,10 @@ let FirebaseAuthNode = require('firebase-auth-node');
   
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://cardapp-6477e.firebaseio.com"
+    databaseURL: "https://cardapp-6477e.firebaseio.com",
+    storageBucket : "gs://cardapp-6477e.appspot.com"
   });
-  
+  const Storage = admin.storage();
   const DB = admin.firestore();
   const settings = {
       timestampsInSnapshots: true
@@ -30,5 +31,6 @@ let FirebaseAuthNode = require('firebase-auth-node');
 
   module.exports = {
     DB,
-    firebaseAuth
+    firebaseAuth,
+    Storage
   };
