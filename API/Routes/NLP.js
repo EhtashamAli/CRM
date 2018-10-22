@@ -14,6 +14,12 @@ const  {
     validatePostCode
    } = require ('../utils/functions.js');
 
+   // Require `PhoneNumberFormat`.
+const PNF = require('google-libphonenumber').PhoneNumberFormat;
+// Get an instance of `PhoneNumberUtil`.
+const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
+
+
    // Imports the Google Cloud client library
 const vision = require('@google-cloud/vision');
 const language = require ('@google-cloud/language');
@@ -90,8 +96,9 @@ router.post('/NLP', (req, res) => {
               // console.log("text" , text)
               // Take a copy of the original text to reference later
               const originalText = _.cloneDeep(text);
-              // console.log("originalText" , originalText)
+              //console.log("originalText" , originalText)
               const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
+              // console.log(cleanedText)
               const languageClient = new language.LanguageServiceClient({
                 keyFilename: './credentials/leadcarrot.json',
               });
@@ -99,9 +106,15 @@ router.post('/NLP', (req, res) => {
                 content: cleanedText,
                 type: 'PLAIN_TEXT',
               };
-    
+              // /^\+?([0-9]{2})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{4})$/
+              // const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
+              // console.log("testNum" , testNum);
+              // /\b\d{5}\b/g
+                // const testNum = cleanedText.match(/\d/g);
+                // console.log("testNum" , testNum)
                 const arr = originalText.split("\n")
                 // ['' , 'xyz.com' , '' , '']
+                // console.log(arr);
     
                 const reqEmail =  arr.map(str => {
                    if(validateEmail(str))
@@ -111,25 +124,31 @@ router.post('/NLP', (req, res) => {
                   if(validateDomain(str))
                      return str
                });
-               const reqNumber =  arr.map(str => {
-                if(validatePhoneNumber(str))
-                   return str
-             });
+               const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
+              //  console.log("testNum" , testNum);
+               const reqNumber =  testNum.map(str => {
+                const number = phoneUtil.parseAndKeepRawInput( str, 'US');
+                const nationalNUm = number.getNationalNumber()
+                // console.log(nationalNUm);
+                if(phoneUtil.isValidNumber(number))
+                  return str
+                });
              const reqPostcode =  arr.map(str => {
               if(validatePostCode(str))
                  return str
               });
   
               Objnumber = reqNumber.map(num => {
-                return {
-                  phone : num ? num : '',
-                  type : 'Mobile'
-                }
+                if (!_.isEmpty(num)) 
+                  return {
+                    phone : num ? num : '',
+                    type : 'Mobile'
+                  }
               });
              
                 const email = reqEmail.filter((e) => e !== undefined);
                 const domain = reqDomain.filter((e) => e !== undefined);
-                const number = Objnumber.filter((e) => e.number !== undefined);
+                // const number = Objnumber.filter((e) => e !== null);
                 const postCode = reqPostcode.filter((e) => e !== undefined);
                 // console.log("email" , email);
                 // console.log("domain" , domain);
@@ -159,7 +178,7 @@ router.post('/NLP', (req, res) => {
               });
               // console.log('address' ,requiredEntities.LOCATION);
               // console.log('company' , requiredEntities.ORGANIZATION);
-
+             // console.log(phoneUtil.isPossibleNumber('03159155590'));
               // data fetched from NLP //
               const DATA = {
                 firstName : requiredEntities.PERSON,
@@ -173,7 +192,7 @@ router.post('/NLP', (req, res) => {
                  ],
                 email,
                 company : requiredEntities.ORGANIZATION,
-                position : requiredEntities.PERSON,
+                position : requiredEntities.ORGANIZATION,
                 description : requiredEntities.OTHER + ' ' + requiredEntities.UNKNOWN,
                 domain,
                 zipCode : postCode,
@@ -192,28 +211,26 @@ router.post('/NLP', (req, res) => {
                           success : false
                       })
                   }
-                })
-                const ref = DB.collection("OCR").doc(req.body.uid).collection("History").doc()
-                ref.set(JSON.parse(JSON.stringify(DATA)))
-                  .then(result => {
-                      ref.get().then(doc => {
-                        res.status(200).json({
-                
-                            ...doc.data(),
-                            id : doc.id
-                          
-                         });
+                  const ref = DB.collection("OCR").doc(req.body.uid).collection("History").doc()
+                  ref.set(JSON.parse(JSON.stringify(DATA)))
+                    .then(result => {
+                        ref.get().then(doc => {
+                          res.status(200).json({
+                              ...doc.data(),
+                              id : doc.id
+                          });
+                        })
                       })
                   })
                   .catch(err => {
                     res.status(500).json({
-                       err
+                        err
                     });
-                  });    
+                  }); 
               } else { // IF NOT SIGNED IN
                 // return your data
-                res.status(200).json({
-                    ...doc.data(),
+                 res.status(200).json({
+                    ...DATA,
                     id : null
                 });
               }
