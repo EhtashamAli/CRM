@@ -11,7 +11,8 @@ const  {
     validateEmail,
     validateDomain,
     validatePhoneNumber,
-    validatePostCode
+    validatePostCode,
+    ValidateAddress
    } = require ('../utils/functions.js');
 
    // Require `PhoneNumberFormat`.
@@ -28,6 +29,16 @@ const GOOGLE_CLOUD_KEYFILE =  require('../../credentials/leadcarrot.json');
 const DB = require('../FireBase/Firebase').DB;
 const AUTH = require('../FireBase/Firebase').firebaseAuth;
 const STORAGE = require('../FireBase/Firebase').Storage;
+
+// var storageRef = STORAGE().ref();
+
+// Create a reference to 'mountains.jpg'
+//var mountainsRef = storageRef.child('mountains.jpg');
+
+// Create a reference to 'images/mountains.jpg'
+// var mountainImagesRef = storageRef.child('images/mountains.jpg');
+// console.log(mountainImagesRef)
+
 // var storageRef = STORAGE.ref();
 // Set The Storage Engine
 const storage = multer.diskStorage({
@@ -98,7 +109,7 @@ router.post('/NLP', (req, res) => {
               const originalText = _.cloneDeep(text);
               //console.log("originalText" , originalText)
               const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
-              // console.log(cleanedText)
+              console.log(cleanedText)
               const languageClient = new language.LanguageServiceClient({
                 keyFilename: './credentials/leadcarrot.json',
               });
@@ -106,16 +117,10 @@ router.post('/NLP', (req, res) => {
                 content: cleanedText,
                 type: 'PLAIN_TEXT',
               };
-              // /^\+?([0-9]{2})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{4})$/
-              // const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
-              // console.log("testNum" , testNum);
-              // /\b\d{5}\b/g
-                // const testNum = cleanedText.match(/\d/g);
-                // console.log("testNum" , testNum)
+       
                 const arr = originalText.split("\n")
                 // ['' , 'xyz.com' , '' , '']
                 // console.log(arr);
-    
                 const reqEmail =  arr.map(str => {
                    if(validateEmail(str))
                       return str
@@ -125,23 +130,21 @@ router.post('/NLP', (req, res) => {
                      return str
                });
                const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
-              //  console.log("testNum" , testNum);
+               console.log(testNum);
+              const objPostCode = ValidateAddress(cleanedText , req.body.countryCode);
+              console.log(objPostCode);
+               ////////////////////////////////////////////////////////////////
                const reqNumber =  testNum.map(str => {
-                const number = phoneUtil.parseAndKeepRawInput( str, 'US');
+                const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
                 const nationalNUm = number.getNationalNumber()
                 // console.log(nationalNUm);
                 if(phoneUtil.isValidNumber(number))
                   return str
                 });
-             const reqPostcode =  arr.map(str => {
-              if(validatePostCode(str))
-                 return str
-              });
-  
               Objnumber = reqNumber.map(num => {
                 if (!_.isEmpty(num)) 
                   return {
-                    phone : num ? num : '',
+                    phone : num ? req.body.cCode + " " + num : '',
                     type : 'Mobile'
                   }
               });
@@ -149,11 +152,8 @@ router.post('/NLP', (req, res) => {
                 const email = reqEmail.filter((e) => e !== undefined);
                 const domain = reqDomain.filter((e) => e !== undefined);
                 // const number = Objnumber.filter((e) => e !== null);
-                const postCode = reqPostcode.filter((e) => e !== undefined);
-                // console.log("email" , email);
-                // console.log("domain" , domain);
-                // console.log("number" , number);
-                // console.log("postCode" , postCode);
+                // const postCode = reqPostcode.filter((e) => e !== undefined);
+         
               let languageResults;
               try {
                 languageResults = await languageClient.analyzeEntities({
@@ -186,8 +186,8 @@ router.post('/NLP', (req, res) => {
                 phonenumber : Objnumber,
                 address : [
                   {
-                    zip: '',
-                    address : requiredEntities.LOCATION
+                    zip: objPostCode.zipCode,
+                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +" " +  objPostCode.City +" " +  objPostCode.Province
                   }
                  ],
                 email,
@@ -195,7 +195,7 @@ router.post('/NLP', (req, res) => {
                 position : requiredEntities.ORGANIZATION,
                 description : requiredEntities.OTHER + ' ' + requiredEntities.UNKNOWN,
                 domain,
-                zipCode : postCode,
+                //zipCode : postCode,
                 other : requiredEntities.OTHER,
                 UNKNOWN : requiredEntities.UNKNOWN
               }
@@ -211,12 +211,13 @@ router.post('/NLP', (req, res) => {
                           success : false
                       })
                   }
-                  const ref = DB.collection("OCR").doc(req.body.uid).collection("History").doc()
+                  const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc()
                   ref.set(JSON.parse(JSON.stringify(DATA)))
                     .then(result => {
                         ref.get().then(doc => {
                           res.status(200).json({
                               ...doc.data(),
+                              isUserAvailable : true,
                               id : doc.id
                           });
                         })
@@ -229,10 +230,22 @@ router.post('/NLP', (req, res) => {
                   }); 
               } else { // IF NOT SIGNED IN
                 // return your data
-                 res.status(200).json({
-                    ...DATA,
-                    id : null
-                });
+                const ref = DB.collection("NOT LOGGED IN USERS").doc("OCRCRMUSERS").collection("History").doc()
+                ref.set(JSON.parse(JSON.stringify(DATA)))
+                  .then(result => {
+                      ref.get().then(doc => {
+                        res.status(200).json({
+                            ...doc.data(),
+                            isUserAvailable : false,
+                            id : doc.id
+                        });
+                      })
+                    })
+                    .catch(err => {
+                      res.status(500).json({
+                          err
+                      });
+                    }); 
               }
             }
             catch(Err) {

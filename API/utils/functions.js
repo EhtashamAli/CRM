@@ -62,6 +62,29 @@ const validatePhoneNumber = (num) => {
 var re = /^\+?([0-9]{2})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{4})$/;
 return re.test(String(num));
 }
+
+const ValidateAddress = (cleanedText , countryCode) => {
+  console.log("here")
+  let PostCode = "";
+  if(countryCode == "CA") {
+    PostCode = cleanedText.match(/[ABCEGHJKLMNPRSTVXY]\d{1}[ABCEGHJ-NPRSTV-Z]?[- ]?\d{1}[ABCEGHJ-NPRSTV-Z]\d{1}/g);
+  }
+  console.log(PostCode)
+  if(countryCode == "US") {
+    PostCode = cleanedText.match(/\d{5}([ \-]\d{4})?/g);
+  }
+  const repText = cleanedText.replace(PostCode , "testPostCode");
+  console.log(repText)
+  const token = repText.split(" ");
+  const index = token.indexOf("testPostCode");
+  return {
+    zipCode : PostCode,
+    Province : token[index-1],
+    City : token[index-2],
+    Street : token[index-3],
+    PhysicalAddress : token[index-4]
+  }
+}
 module.exports = {
     removeEmails,
     removePostcodes,
@@ -70,5 +93,6 @@ module.exports = {
     validateEmail,
     validateDomain,
     validatePhoneNumber,
-    validatePostCode
+    validatePostCode,
+    ValidateAddress
 }
