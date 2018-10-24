@@ -30,6 +30,7 @@ let FirebaseAuthNode = require('firebase-auth-node');
   let firebaseAuth = new FirebaseAuthNode( config, serviceAccount);
 
   module.exports = {
+    admin,
     DB,
     firebaseAuth,
     Storage

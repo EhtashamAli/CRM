@@ -64,17 +64,20 @@ return re.test(String(num));
 }
 
 const ValidateAddress = (cleanedText , countryCode) => {
-  console.log("here")
+  // console.log(cleanedText);
+  // cleanedText = cleanedText.replace(/-/g, '')
+  // console.log(cleanedText);
   let PostCode = "";
   if(countryCode == "CA") {
     PostCode = cleanedText.match(/[ABCEGHJKLMNPRSTVXY]\d{1}[ABCEGHJ-NPRSTV-Z]?[- ]?\d{1}[ABCEGHJ-NPRSTV-Z]\d{1}/g);
   }
-  console.log(PostCode)
+  // console.log(PostCode)
   if(countryCode == "US") {
     PostCode = cleanedText.match(/\d{5}([ \-]\d{4})?/g);
   }
-  const repText = cleanedText.replace(PostCode , "testPostCode");
-  console.log(repText)
+  let repText = cleanedText.replace(PostCode , "testPostCode");
+  repText = repText.replace(/,/g, '');
+  repText = repText.replace(/\./g, "");
   const token = repText.split(" ");
   const index = token.indexOf("testPostCode");
   return {

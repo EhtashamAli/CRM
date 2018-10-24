@@ -27,7 +27,7 @@ const language = require ('@google-cloud/language');
 const GOOGLE_CLOUD_KEYFILE =  require('../../credentials/leadcarrot.json');
 // DB instance 
 const DB = require('../FireBase/Firebase').DB;
-const AUTH = require('../FireBase/Firebase').firebaseAuth;
+const ADMIN = require('../FireBase/Firebase').admin;
 const STORAGE = require('../FireBase/Firebase').Storage;
 
 // var storageRef = STORAGE().ref();
@@ -129,18 +129,24 @@ router.post('/NLP', (req, res) => {
                   if(validateDomain(str))
                      return str
                });
-               const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
-               console.log(testNum);
+               const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?[ ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
+              //  console.log(testNum);
               const objPostCode = ValidateAddress(cleanedText , req.body.countryCode);
-              console.log(objPostCode);
+              // console.log(objPostCode);
                ////////////////////////////////////////////////////////////////
-               const reqNumber =  testNum.map(str => {
+               let reqNumber =  testNum.map(str => {
                 const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
                 const nationalNUm = number.getNationalNumber()
                 // console.log(nationalNUm);
                 if(phoneUtil.isValidNumber(number))
                   return str
+                else 
+                  console.log(str)
                 });
+                reqNumber = reqNumber.filter( el => {
+                  return el != null;
+                })
+                console.log(reqNumber)
               Objnumber = reqNumber.map(num => {
                 if (!_.isEmpty(num)) 
                   return {
@@ -183,11 +189,11 @@ router.post('/NLP', (req, res) => {
               const DATA = {
                 firstName : requiredEntities.PERSON,
                 lastName : requiredEntities.PERSON,
-                phonenumber : Objnumber,
+                phoneNumber : Objnumber,
                 address : [
                   {
-                    zip: objPostCode.zipCode,
-                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +" " +  objPostCode.City +" " +  objPostCode.Province
+                    zip: objPostCode.zipCode[0],
+                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province
                   }
                  ],
                 email,
@@ -203,13 +209,13 @@ router.post('/NLP', (req, res) => {
 
               // CHECKS IF USER IS SIGNED IN
               if(req.body.token){
-                AUTH.authToken(req.body.token)
-                .then((decodedToken) => {
-                  if(!decodedToken){
-                      return res.status(404).json({
-                          Error : "Invalid Token",
-                          success : false
-                      })
+                ADMIN.auth().verifyIdToken(req.body.token)
+                .then(decodedToken => {
+                  if(!(decodedToken.uid == req.body.uid)) {
+                    return res.status(404).json({
+                      Error : "Invalid Token",
+                      success : false
+                    });
                   }
                   const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc()
                   ref.set(JSON.parse(JSON.stringify(DATA)))
@@ -221,14 +227,15 @@ router.post('/NLP', (req, res) => {
                               id : doc.id
                           });
                         })
-                      })
-                  })
-                  .catch(err => {
-                    res.status(500).json({
-                        err
-                    });
-                  }); 
-              } else { // IF NOT SIGNED IN
+                      });
+                })
+                .catch( err => {
+                  res.status(500).json({
+                    err
+                  });
+                })
+              } else {
+                // IF NOT SIGNED IN
                 // return your data
                 const ref = DB.collection("NOT LOGGED IN USERS").doc("OCRCRMUSERS").collection("History").doc()
                 ref.set(JSON.parse(JSON.stringify(DATA)))
@@ -251,7 +258,7 @@ router.post('/NLP', (req, res) => {
             catch(Err) {
                 res.status(404).json({
                   err : Err,
-                  message : "No Text In Image"
+                  // message : "No Text In Image"
                 })
             }
            }
