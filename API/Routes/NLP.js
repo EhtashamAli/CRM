@@ -30,16 +30,6 @@ const DB = require('../FireBase/Firebase').DB;
 const ADMIN = require('../FireBase/Firebase').admin;
 const STORAGE = require('../FireBase/Firebase').Storage;
 
-// var storageRef = STORAGE().ref();
-
-// Create a reference to 'mountains.jpg'
-//var mountainsRef = storageRef.child('mountains.jpg');
-
-// Create a reference to 'images/mountains.jpg'
-// var mountainImagesRef = storageRef.child('images/mountains.jpg');
-// console.log(mountainImagesRef)
-
-// var storageRef = STORAGE.ref();
 // Set The Storage Engine
 const storage = multer.diskStorage({
   destination: './public/uploads/',
