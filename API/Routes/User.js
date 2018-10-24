@@ -9,6 +9,48 @@ const AUTH = require('../FireBase/Firebase').firebaseAuth;
 // const validateRegisterInput = require('../utils/register');
 
 
+router.post('/update' , (req, res) => {
+    const DATA = req.body.data;
+    const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc(req.body.data.id);
+    if(req.body.token){
+        ADMIN.auth().verifyIdToken(req.body.token)
+        .then((decodedToken) => {
+            const uid = decodedToken.uid;
+            if(req.body.uid == uid){
+                ref.set(JSON.parse(JSON.stringify(DATA)) , {merge : true})
+                .then(result => {
+                    ref.get().then(doc => {
+                    res.status(200).json({
+                        ...doc.data(),
+                        id : doc.id
+                    });
+                    })
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        Error : err
+                    });
+                });
+            }else {
+                return res.status(404).json({
+                    Error : "Invalid Token",
+                    success : false
+            })
+            }  
+        })
+        .catch(Err => {
+            res.status(500).json({
+                Err
+            });
+        })
+    } else {
+        return res.status(404).json({
+            Error : "Invalid Token",
+            success : false
+        })
+    }
+    
+});
 router.post('/getHistory' , (req,res) => {
 
     if(req.body.token){
