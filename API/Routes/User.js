@@ -3,6 +3,7 @@ const passport = require('passport');
 const DB = require('../FireBase/Firebase').DB;
 const ADMIN = require('../FireBase/Firebase').admin;
 const AUTH = require('../FireBase/Firebase').firebaseAuth;
+const DATE = new Date();
 // const bcrypt = require('bcrypt');
 // const USER = DB.collection("USER");
 // const HISTORY = DB.collection("HISTORY");
@@ -10,7 +11,8 @@ const AUTH = require('../FireBase/Firebase').firebaseAuth;
 
 
 router.post('/update' , (req, res) => {
-    const DATA = req.body.data;
+    let DATA = req.body.data;
+    DATA.updatedAt = DATE.toLocaleString();
     const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc(req.body.data.id);
     if(req.body.token){
         ADMIN.auth().verifyIdToken(req.body.token)
@@ -22,9 +24,10 @@ router.post('/update' , (req, res) => {
                     ref.get().then(doc => {
                     res.status(200).json({
                         ...doc.data(),
-                        id : doc.id
+                        id : doc.id,
+                        updated : true
                     });
-                    })
+                    });
                 })
                 .catch(err => {
                     res.status(500).json({

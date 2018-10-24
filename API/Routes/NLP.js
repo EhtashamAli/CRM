@@ -30,6 +30,9 @@ const DB = require('../FireBase/Firebase').DB;
 const ADMIN = require('../FireBase/Firebase').admin;
 const STORAGE = require('../FireBase/Firebase').Storage;
 
+// DATE OBJECT
+const DATE = new Date();
+
 // Set The Storage Engine
 const storage = multer.diskStorage({
   destination: './public/uploads/',
@@ -193,7 +196,9 @@ router.post('/NLP', (req, res) => {
                 domain,
                 //zipCode : postCode,
                 other : requiredEntities.OTHER,
-                UNKNOWN : requiredEntities.UNKNOWN
+                UNKNOWN : requiredEntities.UNKNOWN,
+                addedAt : DATE.toLocaleString(),
+                updatedAt : "",
               }
               //////////////////////////////////////////////////
 
