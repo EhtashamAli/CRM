@@ -102,7 +102,7 @@ router.post('/NLP', (req, res) => {
               const originalText = _.cloneDeep(text);
               //console.log("originalText" , originalText)
               const cleanedText = _.replace(_.cloneDeep(originalText), /\r?\n|\r/g, ' ');
-              console.log(cleanedText)
+              // console.log(cleanedText)
               const languageClient = new language.LanguageServiceClient({
                 keyFilename: './credentials/leadcarrot.json',
               });
@@ -125,21 +125,20 @@ router.post('/NLP', (req, res) => {
                const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?[ ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
               //  console.log(testNum);
               const objPostCode = ValidateAddress(cleanedText , req.body.countryCode);
-              // console.log(objPostCode);
+              console.log("objPostCode" , objPostCode);
                ////////////////////////////////////////////////////////////////
                let reqNumber =  testNum.map(str => {
-                const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
-                const nationalNUm = number.getNationalNumber()
-                // console.log(nationalNUm);
+                  const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
+                  const nationalNUm = number.getNationalNumber()
                 if(phoneUtil.isValidNumber(number))
                   return str
                 else 
-                  console.log(str)
+                  console.log("Something went wrong during parsing the number" , str)
                 });
                 reqNumber = reqNumber.filter( el => {
                   return el != null;
                 })
-                console.log(reqNumber)
+                // console.log("reqNumber" , reqNumber)
               Objnumber = reqNumber.map(num => {
                 if (!_.isEmpty(num)) 
                   return {
@@ -147,7 +146,8 @@ router.post('/NLP', (req, res) => {
                     type : 'Mobile'
                   }
               });
-             
+              // console.log("objNumber" , Objnumber)
+              
                 const email = reqEmail.filter((e) => e !== undefined);
                 const domain = reqDomain.filter((e) => e !== undefined);
                 // const number = Objnumber.filter((e) => e !== null);
@@ -164,6 +164,7 @@ router.post('/NLP', (req, res) => {
               } catch (err) {
                 res.status(500).json({
                   err : err,
+                  message : "Something Went Wrong with Language Client"
                 })
               }
               // Go through detected entities
@@ -177,7 +178,7 @@ router.post('/NLP', (req, res) => {
               });
               // console.log('address' ,requiredEntities.LOCATION);
               // console.log('company' , requiredEntities.ORGANIZATION);
-             // console.log(phoneUtil.isPossibleNumber('03159155590'));
+            //  console.log(phoneUtil.isPossibleNumber('03159155590'));
               // data fetched from NLP //
               const DATA = {
                 firstName : requiredEntities.PERSON,
@@ -185,7 +186,7 @@ router.post('/NLP', (req, res) => {
                 phoneNumber : Objnumber,
                 address : [
                   {
-                    zip: objPostCode.zipCode[0],
+                    zip: objPostCode.zipCode[0] ? objPostCode.zipCode[0] : null,
                     address : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province
                   }
                  ],
@@ -200,6 +201,7 @@ router.post('/NLP', (req, res) => {
                 addedAt : DATE.toLocaleString(),
                 updatedAt : "",
               }
+              console.log(DATA);
               //////////////////////////////////////////////////
 
               // CHECKS IF USER IS SIGNED IN
@@ -222,11 +224,24 @@ router.post('/NLP', (req, res) => {
                               id : doc.id
                           });
                         })
-                      });
+                        .catch(err => {
+                          res.status(500).json({
+                            ERROR : err,
+                            message : "UNABLE TO fetch DATA from DB"
+                          })
+                        })
+                      })
+                      .catch(err => {
+                        res.status(500).json({
+                          ERROR : err,
+                          message : "UNABLE TO SAVE DATA IN DB"
+                        });
+                      })
                 })
                 .catch( err => {
                   res.status(500).json({
-                    err
+                    ERROR : err,
+                    message : "UNABLE TO DECODE TOKEN"
                   });
                 })
               } else {
@@ -242,18 +257,25 @@ router.post('/NLP', (req, res) => {
                             id : doc.id
                         });
                       })
+                      .catch(err => {
+                        res.status(500).json({
+                          ERROR : err,
+                          message : "UNABLE TO fetch DATA from DB"
+                        })
+                      })
                     })
                     .catch(err => {
                       res.status(500).json({
-                          err
+                        ERROR : err,
+                        message : "UNABLE TO SAVE DATA IN DB"
                       });
-                    }); 
+                    });
               }
             }
             catch(Err) {
                 res.status(404).json({
                   err : Err,
-                  // message : "No Text In Image"
+                  message : "No Text In Image or something went wrong"
                 })
             }
            }

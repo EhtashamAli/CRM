@@ -67,7 +67,10 @@ const ValidateAddress = (cleanedText , countryCode) => {
   // console.log(cleanedText);
   // cleanedText = cleanedText.replace(/-/g, '')
   // console.log(cleanedText);
-  let PostCode = "";
+  try{
+    
+  let PostCode = [];
+  
   if(countryCode == "CA") {
     PostCode = cleanedText.match(/[ABCEGHJKLMNPRSTVXY]\d{1}[ABCEGHJ-NPRSTV-Z]?[- ]?\d{1}[ABCEGHJ-NPRSTV-Z]\d{1}/g);
   }
@@ -75,17 +78,25 @@ const ValidateAddress = (cleanedText , countryCode) => {
   if(countryCode == "US") {
     PostCode = cleanedText.match(/\d{5}([ \-]\d{4})?/g);
   }
+  console.log("postCOdein func" , PostCode)
   let repText = cleanedText.replace(PostCode , "testPostCode");
   repText = repText.replace(/,/g, '');
   repText = repText.replace(/\./g, "");
   const token = repText.split(" ");
+  console.log("token" , token);
   const index = token.indexOf("testPostCode");
+  console.log("index " , index)
+  if (PostCode === null) {
+    PostCode = ['null']
+  }
   return {
     zipCode : PostCode,
     Province : token[index-1],
     City : token[index-2],
     Street : token[index-3],
     PhysicalAddress : token[index-4]
+  }} catch (err) {
+    console.log("Something Went Wrong During Parsing Address")
   }
 }
 module.exports = {
