@@ -63,7 +63,7 @@ router.post('/getHistory' , (req,res) => {
             if(req.body.uid == uid){
                 const docRef = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History");
                 let data = []; //declare array for retrieving documents
-                docRef.get()
+                docRef.where('deleted', '==', false).get()
                 .then((docs) =>{
                         docs.forEach(doc=>{
                             //Pushing each doocument into array
@@ -96,6 +96,62 @@ router.post('/getHistory' , (req,res) => {
     }
 });
 
+router.post('/delete' , (req,res) => {
+    let DATA = null;
+    const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc(req.body.id);
+    if(req.body.token){
+        ADMIN.auth().verifyIdToken(req.body.token)
+        .then((decodedToken) => {
+            const uid = decodedToken.uid;
+            if(req.body.uid == uid){
+                ref.get().then(doc => {
+                        DATA ={...doc.data()}
+                        if(DATA === null || undefined){
+                        return res.status(404).json({
+                            message : "NO SUCH DOCUMENT IN DB"
+                        });
+                        }
+                        DATA.deleted = true;
+                        DATA.deletedAt = DATE.toLocaleString();
+                        ref.set(JSON.parse(JSON.stringify(DATA)) , {merge : true})
+                        .then(result => {
+                            res.status(200).json({
+                                deleted : true,
+                                message : "Successfully Deleted Card from Database"
+                            });
+                        })
+                        .catch(err => {
+                            res.status(500).json({
+                                Error : err,
+                                message : "Something Went Wrong Will Fetching DATA from DB"
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        res.status(500).json({
+                           Error : err,
+                           message : "Something Went Wrong Will Fetching DATA from DB"
+                        });
+                    });
+            }else {
+                return res.status(404).json({
+                    Error : "Invalid Token",
+                    success : false
+            })
+            }  
+        })
+        .catch(Err => {
+            res.status(500).json({
+                Err
+            });
+        })
+    } else {
+        return res.status(404).json({
+            Error : "Invalid Token",
+            success : false
+        })
+    }   
+});
 
 
 router.post('/signIn' , (req , res) => {

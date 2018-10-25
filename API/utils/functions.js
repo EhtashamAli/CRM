@@ -83,7 +83,7 @@ const ValidateAddress = (cleanedText , countryCode) => {
   repText = repText.replace(/,/g, '');
   repText = repText.replace(/\./g, "");
   const token = repText.split(" ");
-  // console.log("token" , token);
+  console.log("token" , token);
   const index = token.indexOf("testPostCode");
   // console.log("index " , index)
   if (PostCode === null) {
@@ -97,13 +97,30 @@ const ValidateAddress = (cleanedText , countryCode) => {
       countryCodeError : true
     }
   } else {
-    return {
-      zipCode : PostCode,
-      Province : token[index-1],
-      City : token[index-2],
-      Street : token[index-3],
-      PhysicalAddress : token[index-4],
-      countryCodeError : false
+    console.log(token[index-4])
+  //  console.log(token[index-4] == (('east') || ('East') || ('west') || ('West') || ('South') || ('south') || ('North' )|| ('north')))
+    if((token[index-4] ==='east' || token[index-4] ==='East' || token[index-4] ==='west' ||token[index-4] === 'West' ||token[index-4] === 'South' ||token[index-4] ==='south' ||token[index-4] === 'North' || token[index-4] ==='north')){
+      return {
+        zipCode : PostCode,
+        Province : token[index-1],
+        City : token[index-2],
+        Direction : token[index-4] + " " + token[index-3],
+        Street : token[index-6] + " " + token[index-5],
+        PhysicalAddress : token[index-7],
+        countryCodeError : false,
+        direc : true
+      }
+    }else {
+      return {
+        zipCode : PostCode,
+        Province : token[index-1],
+        City : token[index-2],
+        Direction : false,
+        Street : token[index-3],
+        PhysicalAddress : token[index-4],
+        countryCodeError : false,
+        direc : false
+      }
     }
   }
 

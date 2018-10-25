@@ -183,6 +183,7 @@ router.post('/NLP', (req, res) => {
               // console.log('company' , requiredEntities.ORGANIZATION);
             //  console.log(phoneUtil.isPossibleNumber('03159155590'));
               // data fetched from NLP //
+              console.log(objPostCode)
               const DATA = {
                 firstName : requiredEntities.PERSON,
                 lastName : requiredEntities.PERSON,
@@ -190,7 +191,7 @@ router.post('/NLP', (req, res) => {
                 address : [
                   {
                     zip: objPostCode.zipCode[0] ? objPostCode.zipCode[0] : null,
-                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province,
+                    address : objPostCode.direc ? objPostCode.PhysicalAddress +" " + objPostCode.Street +" "+ objPostCode.Direction + "," +  objPostCode.City +" " +  objPostCode.Province : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province,
                     countryCodeError : objPostCode.countryCodeError ? true : false 
                   }
                  ],
@@ -203,6 +204,8 @@ router.post('/NLP', (req, res) => {
                 other : requiredEntities.OTHER,
                 UNKNOWN : requiredEntities.UNKNOWN,
                 image : req.body.image ? req.body.image : null,
+                deleted : false,
+                deletedAt : "",
                 addedAt : DATE.toLocaleString(),
                 updatedAt : "",
               }
@@ -220,7 +223,7 @@ router.post('/NLP', (req, res) => {
                       success : false
                     });
                   }
-                  const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc()
+                  const ref = DB.collection("LOGIN USERS").doc(req.body.uid).collection("History").doc();
                   ref.set(JSON.parse(JSON.stringify(DATA)))
                     .then(result => {
                         ref.get().then(doc => {
