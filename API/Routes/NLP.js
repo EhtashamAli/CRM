@@ -125,13 +125,15 @@ router.post('/NLP', (req, res) => {
                const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?[ ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
               //  console.log(testNum);
               const objPostCode = ValidateAddress(cleanedText , req.body.countryCode);
-              console.log("objPostCode" , objPostCode);
+              // console.log("objPostCode" , objPostCode);
                ////////////////////////////////////////////////////////////////
                let reqNumber =  testNum.map(str => {
                   const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
-                  const nationalNUm = number.getNationalNumber()
+                  const nationalNUm = number.getNationalNumber();
+                  // console.log("nationalNUm" , nationalNUm)
+                  // console.log("number" , number)
                 if(phoneUtil.isValidNumber(number))
-                  return str
+                  return nationalNUm
                 else 
                   console.log("Something went wrong during parsing the number" , str)
                 });
@@ -140,7 +142,8 @@ router.post('/NLP', (req, res) => {
                 })
                 // console.log("reqNumber" , reqNumber)
               Objnumber = reqNumber.map(num => {
-                if (!_.isEmpty(num)) 
+                // console.log("numin map" , num)
+                // if (!_.isEmpty(num)) 
                   return {
                     phone : num ? req.body.cCode + " " + num : '',
                     type : 'Mobile'
@@ -202,11 +205,12 @@ router.post('/NLP', (req, res) => {
                 addedAt : DATE.toLocaleString(),
                 updatedAt : "",
               }
-              console.log(DATA);
+              // console.log(DATA);
               //////////////////////////////////////////////////
 
               // CHECKS IF USER IS SIGNED IN
-              if(req.body.token){
+              if((req.body.token )){
+                //console.log("here")
                 ADMIN.auth().verifyIdToken(req.body.token)
                 .then(decodedToken => {
                   if(!(decodedToken.uid == req.body.uid)) {

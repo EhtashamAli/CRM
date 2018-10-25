@@ -78,14 +78,14 @@ const ValidateAddress = (cleanedText , countryCode) => {
   if(countryCode == "US") {
     PostCode = cleanedText.match(/\d{5}([ \-]\d{4})?/g);
   }
-  console.log("postCOdein func" , PostCode)
+  // console.log("postCOdein func" , PostCode)
   let repText = cleanedText.replace(PostCode , "testPostCode");
   repText = repText.replace(/,/g, '');
   repText = repText.replace(/\./g, "");
   const token = repText.split(" ");
-  console.log("token" , token);
+  // console.log("token" , token);
   const index = token.indexOf("testPostCode");
-  console.log("index " , index)
+  // console.log("index " , index)
   if (PostCode === null) {
     PostCode = ['null']
     return {
