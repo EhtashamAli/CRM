@@ -187,7 +187,8 @@ router.post('/NLP', (req, res) => {
                 address : [
                   {
                     zip: objPostCode.zipCode[0] ? objPostCode.zipCode[0] : null,
-                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province
+                    address : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province,
+                    countryCodeError : objPostCode.countryCodeError ? true : false 
                   }
                  ],
                 email,

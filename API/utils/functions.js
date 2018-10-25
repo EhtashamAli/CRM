@@ -88,14 +88,26 @@ const ValidateAddress = (cleanedText , countryCode) => {
   console.log("index " , index)
   if (PostCode === null) {
     PostCode = ['null']
+    return {
+      zipCode : PostCode,
+      Province : "",
+      City : "",
+      Street : "",
+      PhysicalAddress : "",
+      countryCodeError : true
+    }
+  } else {
+    return {
+      zipCode : PostCode,
+      Province : token[index-1],
+      City : token[index-2],
+      Street : token[index-3],
+      PhysicalAddress : token[index-4],
+      countryCodeError : false
+    }
   }
-  return {
-    zipCode : PostCode,
-    Province : token[index-1],
-    City : token[index-2],
-    Street : token[index-3],
-    PhysicalAddress : token[index-4]
-  }} catch (err) {
+
+} catch (err) {
     console.log("Something Went Wrong During Parsing Address")
   }
 }
