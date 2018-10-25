@@ -202,6 +202,7 @@ router.post('/NLP', (req, res) => {
                 //zipCode : postCode,
                 other : requiredEntities.OTHER,
                 UNKNOWN : requiredEntities.UNKNOWN,
+                image : req.body.image ? req.body.image : null,
                 addedAt : DATE.toLocaleString(),
                 updatedAt : "",
               }
