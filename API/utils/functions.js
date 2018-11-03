@@ -67,59 +67,77 @@ const ValidateAddress = (cleanedText , countryCode) => {
   // console.log(cleanedText);
   // cleanedText = cleanedText.replace(/-/g, '')
   // console.log(cleanedText);
+ 
   try{
+    let pAddress = "";
+    if(pAddress == "") 
+       pAddress = cleanedText.match(/[][ABCDEFGHIGKLMNOPQRSTUVWXYZ][- ]\d{3}[ ,]/g);
+    if(pAddress == null) 
+       pAddress = cleanedText.match(/[ ]\d{4}[ ,]/g);
+    if(pAddress == null)
+       pAddress = cleanedText.match(/[ ]\d{3}[ ,]/g);
+    if(pAddress == null) 
+       pAddress = cleanedText.match(/[ ]\d{2}[ ,]/g);
+    if(pAddress == null) 
+       pAddress = cleanedText.match(/[ ]\d{5}[ ,]/g);
     
-  let PostCode = [];
-  
+    console.log(pAddress)
+    let PostCode = [];
   if(countryCode == "CA") {
     PostCode = cleanedText.match(/[ABCEGHJKLMNPRSTVXY]\d{1}[ABCEGHJ-NPRSTV-Z]?[- ]?\d{1}[ABCEGHJ-NPRSTV-Z]\d{1}/g);
   }
-  // console.log(PostCode)
   if(countryCode == "US") {
     PostCode = cleanedText.match(/\d{5}([ \-]\d{4})?/g);
   }
   // console.log("postCOdein func" , PostCode)
+  // console.log(pAddress)
   let repText = cleanedText.replace(PostCode , "testPostCode");
+  repText = repText.replace(pAddress , " testpAddress ");
   repText = repText.replace(/,/g, '');
   repText = repText.replace(/\./g, "");
   const token = repText.split(" ");
-  console.log("token" , token);
   const index = token.indexOf("testPostCode");
+  const fIndex = token.indexOf("testpAddress");
+  const diff = index - fIndex;
+  // console.log("token" , token);
+  // console.log(index);
+  // console.log(fIndex)
+  // console.log(diff);
   // console.log("index " , index)
-  if (PostCode === null) {
-    PostCode = ['null']
-    return {
-      zipCode : PostCode,
-      Province : "",
-      City : "",
-      Street : "",
-      PhysicalAddress : "",
-      countryCodeError : true
-    }
-  } else {
-    console.log(token[index-4])
-  //  console.log(token[index-4] == (('east') || ('East') || ('west') || ('West') || ('South') || ('south') || ('North' )|| ('north')))
-    if((token[index-4] ==='east' || token[index-4] ==='East' || token[index-4] ==='west' ||token[index-4] === 'West' ||token[index-4] === 'South' ||token[index-4] ==='south' ||token[index-4] === 'North' || token[index-4] ==='north')){
+  if(index != '-1') { // ZipCode Found
+    if(fIndex != '-1') { // pAddress Found
+        let test = ''
+        for(i=1 ; i< diff ; i++) {
+            test += token[fIndex + i] + " "
+        }
+        return {
+          zipCode : PostCode,
+          // Province : token[fIndex + (diff -1)],
+          // City : token[fIndex + (diff -2)],
+          //Direction : token[fIndex + (diff - 3)] + " " + token[fIndex + (diff - 4)],
+          //Street : token[fIndex + (diff - 5)] + " " + token[fIndex + (diff - 6)] + " " + token[fIndex + (diff - 7)] + " " + token[fIndex + (diff - 8)],
+          PhysicalAddress : pAddress + " " + test , 
+          countryCodeError : false
+        }
+    } else { // pAddress Not Found
       return {
         zipCode : PostCode,
-        Province : token[index-1],
-        City : token[index-2],
-        Direction : token[index-4] + " " + token[index-3],
-        Street : token[index-6] + " " + token[index-5],
-        PhysicalAddress : token[index-7],
-        countryCodeError : false,
-        direc : true
+        PhysicalAddress : token[index-5] + " " + token[index-4] + " " + token[index-3] + " " + token[index-2] + " " + token[index-1], 
+        countryCodeError : false
       }
-    }else {
+    }
+  } else {  // ZipCode Not Found
+    if(fIndex != '-1') { // pAddress Found
       return {
-        zipCode : PostCode,
-        Province : token[index-1],
-        City : token[index-2],
-        Direction : false,
-        Street : token[index-3],
-        PhysicalAddress : token[index-4],
-        countryCodeError : false,
-        direc : false
+        zipCode : [null],
+        PhysicalAddress : pAddress + " " + token[fIndex+1] + " " + token[fIndex+2] + " " + token[fIndex+3] + " " + token[fIndex+4], 
+        countryCodeError : false
+      }
+    } else { // pAddress Not Found
+      return {
+        zipCode : [null],
+        PhysicalAddress : "Something Went Wrong", 
+        countryCodeError : false
       }
     }
   }
@@ -139,3 +157,42 @@ module.exports = {
     validatePostCode,
     ValidateAddress
 }
+
+
+
+// if (PostCode === null) {
+//   PostCode = ['null']
+//   return {
+//     zipCode : PostCode,
+//     Province : "",
+//     City : "",
+//     Street : "",
+//     PhysicalAddress : "",
+//     countryCodeError : true
+//   }
+// } else {
+//   console.log(token[index-4])
+// //  console.log(token[index-4] == (('east') || ('East') || ('west') || ('West') || ('South') || ('south') || ('North' )|| ('north')))
+//   if((token[index-4] ==='east' || token[index-4] ==='East' || token[index-4] ==='west' ||token[index-4] === 'West' ||token[index-4] === 'South' ||token[index-4] ==='south' ||token[index-4] === 'North' || token[index-4] ==='north')){
+//     return {
+//       zipCode : PostCode,
+//       Province : token[index-1],
+//       City : token[index-2],
+//       Direction : token[index-4] + " " + token[index-3],
+//       Street : token[index-6] + " " + token[index-5],
+//       PhysicalAddress : token[index-7],
+//       countryCodeError : false,
+//       direc : true
+//     }
+//   }else {
+//     return {
+//       zipCode : PostCode,
+//       Province : token[index-1],
+//       City : token[index-2],
+//       Direction : false,
+//       Street : token[index-3],
+//       PhysicalAddress : token[index-4],
+//       countryCodeError : false,
+//       direc : false
+//     }
+//   }

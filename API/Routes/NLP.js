@@ -112,8 +112,6 @@ router.post('/NLP', (req, res) => {
               };
        
                 const arr = originalText.split("\n")
-                // ['' , 'xyz.com' , '' , '']
-                // console.log(arr);
                 const reqEmail =  arr.map(str => {
                    if(validateEmail(str))
                       return str
@@ -123,38 +121,36 @@ router.post('/NLP', (req, res) => {
                      return str
                });
                const testNum = cleanedText.match(/[(]?(\b\d{3}\b)?[)-. ]?[ ]?(\b\d{3}\b)?[-. ]?(\b\d{4}\b)/g)
-              //  console.log(testNum);
               const objPostCode = ValidateAddress(cleanedText , req.body.countryCode);
-              // console.log("objPostCode" , objPostCode);
-               ////////////////////////////////////////////////////////////////
-               let reqNumber =  testNum.map(str => {
-                  const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
-                  const nationalNUm = number.getNationalNumber();
-                  // console.log("nationalNUm" , nationalNUm)
-                  // console.log("number" , number)
-                if(phoneUtil.isValidNumber(number))
-                  return nationalNUm
-                else 
-                  console.log("Something went wrong during parsing the number" , str)
-                });
-                reqNumber = reqNumber.filter( el => {
-                  return el != null;
-                })
-                // console.log("reqNumber" , reqNumber)
-              Objnumber = reqNumber.map(num => {
-                // console.log("numin map" , num)
-                // if (!_.isEmpty(num)) 
-                  return {
-                    phone : num ? req.body.cCode + " " + num : '',
-                    type : 'Mobile'
-                  }
-              });
-              // console.log("objNumber" , Objnumber)
+              // console.log(objPostCode)
+              let reqNumber =  testNum.map(str => {
+                // console.log(req.body.countryCode)
+                 const number = phoneUtil.parseAndKeepRawInput( str, req.body.countryCode);
+                 const nationalNUm = number.getNationalNumber();
+                 // console.log("nationalNUm" , nationalNUm)
+                 // console.log("number" , number)
+               if(phoneUtil.isValidNumber(number))
+                 return nationalNUm
+               else 
+                 console.log("Something went wrong during parsing the number" , str)
+               });
+               reqNumber = reqNumber.filter( el => {
+                 return el != null;
+               })
+                console.log("reqNumber" , reqNumber)
+             Objnumber = reqNumber.map(num => {
+               // console.log("numin map" , num)
+               // if (!_.isEmpty(num)) 
+                 return {
+                   phone : num ? req.body.cCode + " " + num : '',
+                   type : 'Mobile'
+                 }
+             });
               
+               ////////////////////////////////////////////////////////////////
+      
                 const email = reqEmail.filter((e) => e !== undefined);
                 const domain = reqDomain.filter((e) => e !== undefined);
-                // const number = Objnumber.filter((e) => e !== null);
-                // const postCode = reqPostcode.filter((e) => e !== undefined);
          
               let languageResults;
               try {
@@ -179,11 +175,9 @@ router.post('/NLP', (req, res) => {
                   requiredEntities[type] += ` ${entity.name}`;
                 }
               });
-              // console.log('address' ,requiredEntities.LOCATION);
-              // console.log('company' , requiredEntities.ORGANIZATION);
-            //  console.log(phoneUtil.isPossibleNumber('03159155590'));
+  
               // data fetched from NLP //
-              console.log(objPostCode)
+           
               const DATA = {
                 firstName : requiredEntities.PERSON,
                 lastName : requiredEntities.PERSON,
@@ -191,7 +185,7 @@ router.post('/NLP', (req, res) => {
                 address : [
                   {
                     zip: objPostCode.zipCode[0] ? objPostCode.zipCode[0] : null,
-                    address : objPostCode.direc ? objPostCode.PhysicalAddress +" " + objPostCode.Street +" "+ objPostCode.Direction + "," +  objPostCode.City +" " +  objPostCode.Province : objPostCode.PhysicalAddress +" " + objPostCode.Street +", " +  objPostCode.City +" " +  objPostCode.Province,
+                    address : objPostCode.PhysicalAddress,
                     countryCodeError : objPostCode.countryCodeError ? true : false 
                   }
                  ],
@@ -209,7 +203,7 @@ router.post('/NLP', (req, res) => {
                 addedAt : DATE.toLocaleString(),
                 updatedAt : "",
               }
-              // console.log(DATA);
+              //console.log(DATA);
               //////////////////////////////////////////////////
 
               // CHECKS IF USER IS SIGNED IN
