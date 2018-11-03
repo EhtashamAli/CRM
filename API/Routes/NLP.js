@@ -137,7 +137,7 @@ router.post('/NLP', (req, res) => {
                reqNumber = reqNumber.filter( el => {
                  return el != null;
                })
-                console.log("reqNumber" , reqNumber)
+                // console.log("reqNumber" , reqNumber)
              Objnumber = reqNumber.map(num => {
                // console.log("numin map" , num)
                // if (!_.isEmpty(num)) 

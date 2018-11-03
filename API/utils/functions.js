@@ -81,7 +81,7 @@ const ValidateAddress = (cleanedText , countryCode) => {
     if(pAddress == null) 
        pAddress = cleanedText.match(/[ ]\d{5}[ ,]/g);
     
-    console.log(pAddress)
+    // console.log(pAddress)
     let PostCode = [];
   if(countryCode == "CA") {
     PostCode = cleanedText.match(/[ABCEGHJKLMNPRSTVXY]\d{1}[ABCEGHJ-NPRSTV-Z]?[- ]?\d{1}[ABCEGHJ-NPRSTV-Z]\d{1}/g);
