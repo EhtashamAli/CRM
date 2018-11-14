@@ -12,7 +12,8 @@ const  {
     validateDomain,
     validatePhoneNumber,
     validatePostCode,
-    ValidateAddress
+    ValidateAddress,
+    findSecondaryUnitDesignators
    } = require ('../utils/functions.js');
 
    // Require `PhoneNumberFormat`.
@@ -152,6 +153,10 @@ router.post('/NLP', (req, res) => {
                 const email = reqEmail.filter((e) => e !== undefined);
                 const domain = reqDomain.filter((e) => e !== undefined);
          
+             console.log(cleanedText)
+                // const result = findSecondaryUnitDesignators(cleanedText);
+                // console.log(result);
+
               let languageResults;
               try {
                 languageResults = await languageClient.analyzeEntities({
@@ -179,6 +184,7 @@ router.post('/NLP', (req, res) => {
               // data fetched from NLP //
            
               const DATA = {
+                VISIONRESPONSE : cleanedText,
                 firstName : requiredEntities.PERSON,
                 lastName : requiredEntities.PERSON,
                 phoneNumber : Objnumber,

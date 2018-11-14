@@ -26,6 +26,8 @@
     "express": "^4.16.4",
     "firebase": "^5.5.3",
     "firebase-admin": "^6.0.0",
+    "firebase-auth-node": "^1.0.3",
+    "google-libphonenumber": "^3.1.15",
     "lodash": "^4.17.11",
     "morgan": "^1.9.1",
     "multer": "^1.4.1",

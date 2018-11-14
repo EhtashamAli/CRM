@@ -72,12 +72,12 @@ const ValidateAddress = (cleanedText , countryCode) => {
     let pAddress = "";
     if(pAddress == "") 
        pAddress = cleanedText.match(/[][ABCDEFGHIGKLMNOPQRSTUVWXYZ][- ]\d{3}[ ,]/g);
-    if(pAddress == null) 
-       pAddress = cleanedText.match(/[ ]\d{4}[ ,]/g);
     if(pAddress == null)
        pAddress = cleanedText.match(/[ ]\d{3}[ ,]/g);
     if(pAddress == null) 
        pAddress = cleanedText.match(/[ ]\d{2}[ ,]/g);
+    if(pAddress == null) 
+       pAddress = cleanedText.match(/[ ]\d{4}[ ,]/g);
     if(pAddress == null) 
        pAddress = cleanedText.match(/[ ]\d{5}[ ,]/g);
     
@@ -146,6 +146,9 @@ const ValidateAddress = (cleanedText , countryCode) => {
     console.log("Something Went Wrong During Parsing Address")
   }
 }
+
+
+
 module.exports = {
     removeEmails,
     removePostcodes,
